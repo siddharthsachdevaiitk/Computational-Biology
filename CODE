@@ -1,46 +1,255 @@
-import tensorflow as tf
+import random
+random_numbers = []
+
+random_number = int(random.uniform(0, 20))
+random_numbers.append(random_number)
+
+for i in range(4):
+  random_numbers.append(random_number+10*(i+1))
 import numpy as np
+import matplotlib.pyplot as plt
+from scipy.integrate import odeint
 
-# Define the parameters of the system
-n = 10  # number of variables
-k = np.random.rand(n)  # decay rates
-W = np.random.rand(n, n)  # interaction matrix
+def ffl_simulation():
+    p = {
+        'alphaX': 1,
+        'alphaY': 1,
+        'gammaX': 1,
+        'gammaY': 1,
+        'par': 1
+    }
+    t = np.arange(0, 60, 0.01)
 
-print(W) #randomly generated initial interaction matrix
+    u = np.zeros(len(t))
+    for i in range(len(t)):
+        if t[i] < 10:
+            u[i] = 1
+        elif t[i] < 30:
+            u[i] = 2
+        else:
+            u[i] = 4
 
-print(k) #randomly generated initial decay rate
+    x0 = (p['alphaX'] * u[0] * p['par']) / (p['gammaX'])
+    y0 = (p['alphaY'] * u[0] * p['par']) / (x0 * p['gammaY'])
+    sx0 = (p['alphaX'] * u[0] * p['par']) / (p['gammaX'])
+    sy0 = 0
 
-# Define the neural network
-model = tf.keras.models.Sequential([
-    tf.keras.layers.Dense(n, activation='sigmoid'),
-    tf.keras.layers.Dense(n)
-])
+    xy0 = [x0, y0, sx0, sy0]
 
-# Define the loss function
-def loss_fn(y_true, y_pred, W, k):
-    dydt_pred = tf.reduce_sum(W * y_pred, axis=1) - k * y_pred
-    return tf.reduce_mean(tf.square(dydt_pred - y_true))
+    xy = odeint(iffl1, xy0, t, args=(p,))
 
-# Define the optimizer
-optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
+    plt.figure(1)
+    plt.plot(t, xy[:, 0], 'k', linewidth=2)
+    plt.ylabel('x')
+    plt.xlabel('time')
+    plt.xticks(fontsize=18)
+    plt.yticks(fontsize=18)
+    plt.ylim([0.8, 4.2])
+    plt.show()
 
-# Train the model
-for i in range(1000):
-    y = np.random.rand(n)  # initial condition
-    with tf.GradientTape(persistent=True) as tape:
-        y = tf.convert_to_tensor(y, dtype=tf.float32)
-        dydt_pred = model(tf.expand_dims(y, axis=-1))
-        loss = loss_fn(dydt_pred, tf.zeros(n), W, k)
-    dL_dW, dL_dk = tape.gradient(loss, [model.trainable_variables[2], model.trainable_variables[3]])
-    W -= 0.001 * dL_dW #Gradient descent
-    k -= 0.001 * dL_dk #Gradient descent
-    del tape  # Release resources used by the tape
+    plt.figure(2)
+    plt.plot(t, xy[:, 1], 'k', linewidth=2)
+    plt.xlabel('time')
+    plt.ylabel('y')
+    plt.xticks(fontsize=18)
+    plt.yticks(fontsize=18)
+    plt.ylim([0.95, 1.3])
+    plt.show()
 
-from keras.utils import plot_model
+    plt.figure(3)
+    plt.plot(t, u, 'k', linewidth=2)
+    plt.xlabel('time')
+    plt.ylabel('u')
+    plt.xticks(fontsize=18)
+    plt.yticks(fontsize=18)
+    plt.ylim([0.8, 4.2])
+    plt.show()
 
-print(model.summary())
-plot_model(model, to_file='model_plot.png', show_shapes=True, show_layer_names=True)
+def iffl1(xy0, t, p):
+    x, y, sx, sy = xy0
 
-print(W) #updated interaction matrix after training the model
+    if t < 10:
+        u = 1
+    elif t < 30:
+        u = 2
+    else:
+        u = 4
 
-print(k) #updated decay rate after training the model
+    xdot = p['alphaX'] * u * p['par'] - p['gammaX'] * x
+    ydot = p['alphaY'] * u * p['par'] / x - p['gammaY'] * y
+    sxdot = -p['gammaX'] * sx + p['alphaX'] * u
+    sydot = (-p['alphaY'] * u * p['par'] / x ** 2) * sx - p['gammaY'] * sy + (p['alphaY'] * u) / x
+
+    xydot = [xdot, ydot, sxdot, sydot]
+    return xydot
+
+ffl_simulation()
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.integrate import odeint
+
+def ffl_simulation():
+    p = {
+        'alphaX': 1,
+        'alphaY': 1,
+        'gammaX': 1,
+        'gammaY': 1,
+        'par': 1
+    }
+    t = np.arange(0, 60, 0.01)
+
+    u = np.zeros(len(t))
+    for i in range(len(t)):
+        if t[i] < random_numbers[0]:
+            u[i] = 1
+        elif t[i] < random_numbers[1]:
+            u[i] = 2
+        elif t[i] < random_numbers[2]:
+            u[i] = 3
+        elif t[i] < random_numbers[3]:
+            u[i] = 5
+        else:
+            u[i] = 4
+
+    x0 = (p['alphaX'] * u[0] * p['par']) / (p['gammaX'])
+    y0 = (p['alphaY'] * u[0] * p['par']) / (x0 * p['gammaY'])
+    sx0 = (p['alphaX'] * u[0] * p['par']) / (p['gammaX'])
+    sy0 = 0
+
+    xy0 = [x0, y0, sx0, sy0]
+
+    xy = odeint(iffl1, xy0, t, args=(p,u))
+
+    plt.figure(1)
+    plt.plot(t, xy[:, 0], 'k', linewidth=2)
+    plt.ylabel('x')
+    plt.xlabel('time')
+    plt.xticks(fontsize=18)
+    plt.yticks(fontsize=18)
+    plt.ylim([0.8, 6])
+    plt.show()
+
+    plt.figure(2)
+    plt.plot(t, xy[:, 1], 'k', linewidth=2)
+    plt.xlabel('time')
+    plt.ylabel('y')
+    plt.xticks(fontsize=18)
+    plt.yticks(fontsize=18)
+    plt.ylim([0.8, 1.3])
+    plt.show()
+
+    plt.figure(3)
+    plt.plot(t, u, 'k', linewidth=2)
+    plt.xlabel('time')
+    plt.ylabel('u')
+    plt.xticks(fontsize=18)
+    plt.yticks(fontsize=18)
+    plt.ylim([0.8, 6])
+    plt.show()
+
+def iffl1(xy0, t, p, u):
+    x, y, sx, sy = xy0
+
+    if t < random_numbers[0]:
+        u = 1
+    elif t < random_numbers[1]:
+        u = 2
+    elif t < random_numbers[2]:
+        u = 3
+    elif t < random_numbers[3]:
+        u = 5
+    else:
+        u = 4
+
+    xdot = p['alphaX'] * u * p['par'] - p['gammaX'] * x
+    ydot = p['alphaY'] * u * p['par'] / x - p['gammaY'] * y
+    sxdot = -p['gammaX'] * sx + p['alphaX'] * u
+    sydot = (-p['alphaY'] * u * p['par'] / x ** 2) * sx - p['gammaY'] * sy + (p['alphaY'] * u) / x
+
+    xydot = [xdot, ydot, sxdot, sydot]
+    return xydot
+
+ffl_simulation()
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.integrate import odeint
+
+def iffl1(xy0, t, p, u):
+    x, y, sx, sy = xy0
+
+    if t < random_numbers[0]:
+        u = 1
+    elif t < random_numbers[1]:
+        u = 2
+    elif t < random_numbers[2]:
+        u = 3
+    elif t < random_numbers[3]:
+        u = 5
+    else:
+        u = 4
+
+    xdot = p['alphaX'] * u * p['par'] - p['gammaX'] * x
+    ydot = p['alphaY'] * u * p['par'] / x - p['gammaY'] * y
+    sxdot = -p['gammaX'] * sx + p['alphaX'] * u
+    sydot = (-p['alphaY'] * u * p['par'] / x ** 2) * sx - p['gammaY'] * sy + (p['alphaY'] * u) / x
+
+    xydot = [xdot, ydot, sxdot, sydot]
+    return xydot
+
+p = {
+    'alphaX': 1,
+    'alphaY': 1,
+    'gammaX': 1,
+    'gammaY': 1,
+    'par': 1
+}
+t = np.arange(0, 60, 0.01)
+
+u = np.zeros(len(t))
+for i in range(len(t)):
+    if t[i] < random_numbers[0]:
+        u[i] = 1
+    elif t[i] < random_numbers[1]:
+        u[i] = 2
+    elif t[i] < random_numbers[2]:
+        u[i] = 3
+    elif t[i] < random_numbers[3]:
+        u[i] = 5
+    else:
+        u[i] = 4
+
+x0 = (p['alphaX'] * u[0] * p['par']) / (p['gammaX'])
+y0 = (p['alphaY'] * u[0] * p['par']) / (x0 * p['gammaY'])
+sx0 = (p['alphaX'] * u[0] * p['par']) / (p['gammaX'])
+sy0 = 0
+
+xy0 = [x0, y0, sx0, sy0]
+
+xy = odeint(iffl1, xy0, t, args=(p,u))
+
+plt.figure(1)
+plt.plot(t, xy[:, 0], 'k', linewidth=2)
+plt.ylabel('x')
+plt.xlabel('time')
+plt.xticks(fontsize=18)
+plt.yticks(fontsize=18)
+plt.ylim([0.8, 6])
+plt.show()
+
+plt.figure(2)
+plt.plot(t, xy[:, 1], 'k', linewidth=2)
+plt.xlabel('time')
+plt.ylabel('y')
+plt.xticks(fontsize=18)
+plt.yticks(fontsize=18)
+plt.ylim([0.8, 1.3])
+plt.show()
+
+plt.figure(3)
+plt.plot(t, u, 'k', linewidth=2)
+plt.xlabel('time')
+plt.ylabel('u')
+plt.xticks(fontsize=18)
+plt.yticks(fontsize=18)
+plt.ylim([0.8, 6])
+plt.show()
